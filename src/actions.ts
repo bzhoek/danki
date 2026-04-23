@@ -68,6 +68,51 @@ export const generate_target = async (query: string, options: ApplyOptions) => {
   });
 };
 
+type FieldMap = Record<string, string>;
+const NOTES: FieldMap = {
+  "kanji": "notes",
+  "1reading": "1notes",
+  "2reading": "2notes",
+};
+
+export const generate_notes = async (query: string, options: ApplyOptions) => {
+  const results = await anki_query(query, ...[...Object.keys(NOTES), ...Object.values(NOTES)]);
+  
+  for (const result of results) {
+    const readings = Object.keys(result).filter(k => NOTES[k]);
+    
+    const changes = {}
+    for (const reading of readings) {
+      const notes = NOTES[reading];
+      const value = result[notes];
+      if (value?.length > 0) {
+        if(!options.force) {
+          console.warn("Skipping existing notes for", reading, ":", value);
+          continue;
+        }
+        console.warn("Force overwriting notes for", reading, ":", value);
+      }
+
+      const kanjis = result[reading].replaceAll(/[^一-龘]/g, "");
+      const mapped = [...kanjis].map((kanji: string) => {
+        return kanji_notes(kanji);
+      });
+      const meanings = await Promise.all(mapped);
+      Object.assign(changes, {[notes]: meanings.join(" ")});
+    }
+
+    if (Object.keys(changes).length > 0) {
+      await update_fields(result.id, changes, options.noop);
+    }
+  }
+};
+
+async function kanji_notes(kanji: string): Promise<string> {
+  const results = await anki_query(`(note:OnYomi or note:KunYomi or note:OnKanji) kanji:${kanji}`, "meaning");
+
+  return results.map((result: any) => `<b>${result.meaning}</b> ${kanji}`) ?? ""
+}
+
 export const hint = async (query: string, options: any) => {
   const results = await anki_query(query, "kanji", "target", "hint");
 

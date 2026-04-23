@@ -4,7 +4,7 @@
 import {Command} from "commander";
 import {complete, insert_onyomis, speech} from "./src/lib.ts";
 import {
-  ApplyOptions,
+  ApplyOptions, generate_notes,
   generate_speech,
   generate_target,
   hint, inbox_notes, move_cards,
@@ -40,6 +40,7 @@ query_apply("move", "Move cards to deck", move_cards, only_noop)
 query_apply("inbox", "Move cards of matching notes to Inbox", inbox_notes, only_noop);
 
 query_apply("generate", "Generate target sentence as definition list", generate_target);
+query_apply("notes", "Generate notes based on used kanji", generate_notes);
 query_apply("hint", "Create hint from target", hint);
 query_apply("onyomi", "Convert hiragana to katakana", onyomi);
 query_apply("speech", "Add speech from target in context", generate_speech);

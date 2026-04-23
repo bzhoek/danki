@@ -59,9 +59,11 @@ export async function anki_query(query: string, ...names: string[]) {
   const ids = await anki_post("findNotes", { query: query });
   const notes = await anki_post("notesInfo", { notes: ids.result });
   const results = notes.result.map((note: any) => {
-    const result: any = Object.assign({}, { id: note.noteId });
+    const result: any = Object.assign({}, {id: note.noteId, modelName: note.modelName});
     for (const name of names) {
-      result[name] = note.fields[name].value.trim();
+      if (note.fields[name]) {
+        result[name] = note.fields[name].value.trim();
+      }
     }
     return result;
   });
