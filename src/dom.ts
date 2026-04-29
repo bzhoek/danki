@@ -2,7 +2,7 @@ import {Document, DOMParser} from "xmldom";
 import xpath from "xpath";
 
 export function dl(value: string): string {
-  if (value.startsWith("<dl>")) {
+  if (value?.startsWith("<dl>")) {
     return value;
   }
   return `<dl><dt>${value}</dt></dl>`;

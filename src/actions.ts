@@ -150,11 +150,13 @@ export const word_break = async (query: string, options: any) => {
     
     const clean = doc.dt.replaceAll(ZWSP, "");
     const target = breaks.parse(clean).join(ZWSP);
-    const hint = hide_kanji(target, result.kanji);
-    const fields = {
-      target: `<dl><dt>${target}</dt><dd>${doc.dd}</dd></dl>`,
-      hint: hint
-    };
+    const fields = {target: `<dl><dt>${target}</dt><dd>${doc.dd}</dd></dl>`};
+    if (result.kanji?.length > 0) {
+      const hint = hide_kanji(target, result.kanji);
+      Object.assign(fields, {hint: hint});
+    } else {
+      console.error("Kanji missing", result.id);
+    }
     await update_fields(result.id, fields, options.noop);
   });
 };
