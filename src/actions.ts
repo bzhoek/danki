@@ -132,7 +132,7 @@ function hide_kanji(sentence: string, kanji: string): string {
     .trim();
 }
 
-const ZWSP = "\u200B"; // zero-width space
+export const ZWSP = "\u200B"; // zero-width space
 
 export const word_break = async (query: string, options: any) => {
   const results = await anki_query(query, "kanji", "target", "hint");
@@ -160,6 +160,34 @@ export const word_break = async (query: string, options: any) => {
     await update_fields(result.id, fields, options.noop);
   });
 };
+
+// inserts breaks from broken string into target by synchronizing index
+export function transfer_breaks(target: string, broken:string, separator: string = ZWSP): string {
+  let result = target;
+  let i = 0;
+  for (const char of broken) {
+    if (char == separator) {
+      result = insert_at(result, i + 1, separator);
+    }
+    while (result.charAt(i) !== char && i < target.length) {
+      i++;
+    }
+  }
+  return result;
+}
+
+function insert_at(original: string, index: number, char: string): string {
+  return original.slice(0, index) + char + original.slice(index);
+}
+
+export const break_words = (sentence: string, separator: string = ZWSP): string => {
+  const clean = sentence.replaceAll(separator, "");
+  let broken = breaks.parse(clean).join(separator);
+  if (broken.endsWith("です")) {
+    broken = insert_at(broken, broken.length - 2, separator)
+  }
+  return broken;
+}
 
 function with_dl_doc(results: any, callback: (result: any, doc: any) => void) {
   for (const result of results) {
