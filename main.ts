@@ -7,7 +7,7 @@ import {
   ApplyOptions, generate_notes,
   generate_speech,
   generate_target,
-  hint, inbox_notes, move_cards,
+  hint, inbox_notes, move_cards, na_adjectives,
   onyomi,
   simple_sentence,
   translate, word_break
@@ -46,6 +46,7 @@ query_apply("onyomi", "Convert hiragana to katakana", onyomi);
 query_apply("speech", "Add speech from target in context", generate_speech);
 query_apply("translate", "Add translation to target as definition", translate);
 query_apply("break", "Add zero-width spaces to target", word_break);
+query_apply("na", "Check na-adjectives", na_adjectives);
 
 function prompt_apply(command: string, description: string, transform: (...args: any[]) => string): Command {
   return sub_command(command, description)
