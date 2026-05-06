@@ -114,12 +114,15 @@ async function kanji_notes(kanji: string): Promise<string> {
 }
 
 export const hint = async (query: string, options: any) => {
-  const results = await anki_query(query, "kanji", "target", "hint");
+  const results = await anki_query(query, "kanji", "meaning", "target", "hint");
 
   with_dl_doc(results, async (result, doc) => {
     if (doc.dt.length > 0 && (result.hint.length === 0 || options.force)) {
-      const hint = hide_kanji(doc.dt, result.kanji);
-      await update_fields(result.id, {hint: hint}, options.noop);
+      const clean_kanji = drop_na(result.kanji, result.meaning)
+      const clean_target = doc.dt.replaceAll(ZWSP, "");
+      const clean_hint = hide_kanji(clean_target, clean_kanji);
+      const break_hint = breaks.parse(clean_hint).join(ZWSP);
+      await update_fields(result.id, {hint: break_hint}, options.noop);
     }
   });
 };
@@ -253,13 +256,17 @@ export const na_adjectives = async (query: string, options: any) => {
   }
 }
 
+// remove trailing な if also marked in meaning field
+function drop_na(kanji: string, meaning: string): string {
+  if (meaning.includes("な") && kanji.endsWith("な")) {
+    return kanji.slice(0, -1);
+  }
+  return kanji
+}
+
 // NOTE: there is no on'yomi note that can end in な, it automatically becomes kun'yomi
 export const onyomi_note = (result: any): string | null => {
-  let kanji = result.kanji;
-  // remove trailing な if also marked in meaning field
-  if (result.meaning.includes("な") && kanji.endsWith("な")) {
-    kanji = kanji.slice(0, -1);
-  }
+  const kanji = drop_na(result.kanji, result.meaning)
 
   if (!is_jukugo(kanji)) {
     console.warn("Not jukugo", kanji);
