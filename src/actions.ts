@@ -218,7 +218,7 @@ export const onyomi = async (query: string, options: any) => {
 
 const KANA_NOTES = /^([^.]*)(\..*)?$/;
 
-export const na_adjectives = async (query: string, options: any) => {
+export const nacs_adjectives = async (query: string, options: any) => {
   let words = query.split(",").map((s) => s.trim());
   for (const word of words) {
     const results = await anki_query(`kanji:${word}*`, "kana", "kanji", "meaning", "furigana");
@@ -232,27 +232,39 @@ export const na_adjectives = async (query: string, options: any) => {
         console.error("Different word", result.kanji, "from", word);
         continue;
       }
-      const fields = {}
-      const matches = result.kana.match(KANA_NOTES);
-      const kana = matches[1];
-      const remainder = matches[2] ?? "";
-      if (!kana.endsWith("な")) {
-        Object.assign(fields, {kana: kana + "な" + remainder, speech: ""});
-      }
-      if (!result.kanji.endsWith("な")) {
-        Object.assign(fields, {kanji: result.kanji + "な"});
-      }
-      if (!result.meaning.endsWith("な")) {
-        Object.assign(fields, {meaning: result.meaning + " な"});
-      }
-      if (!result.furigana.endsWith("<ruby>な</ruby>")) {
-        Object.assign(fields, {furigana: result.furigana + "<ruby>な</ruby>"});
-      }
-      
-      if (Object.keys(fields).length > 0) {
-        await update_fields(result.id, fields, options.noop);
-      }
+      await na_note(result, options);
     }
+  }
+}
+
+export const na_adjectives = async (query: string, options: any) => {
+  const results = await anki_query(query, "kana", "kanji", "meaning", "furigana");
+
+  for (const result of results) {
+    await na_note(result, options);
+  }
+}
+
+const na_note = async (result: any, options: any) => {
+  const fields = {}
+  const matches = result.kana.match(KANA_NOTES);
+  const kana = matches[1];
+  const remainder = matches[2] ?? "";
+  if (!kana.endsWith("な")) {
+    Object.assign(fields, {kana: kana + "な" + remainder, speech: ""});
+  }
+  if (!result.kanji.endsWith("な")) {
+    Object.assign(fields, {kanji: result.kanji + "な"});
+  }
+  if (!result.meaning.endsWith("な")) {
+    Object.assign(fields, {meaning: result.meaning + " な"});
+  }
+  if (!result.furigana.endsWith("<ruby>な</ruby>")) {
+    Object.assign(fields, {furigana: result.furigana + "<ruby>な</ruby>"});
+  }
+
+  if (Object.keys(fields).length > 0) {
+    await update_fields(result.id, fields, options.noop);
   }
 }
 
