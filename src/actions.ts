@@ -148,12 +148,13 @@ export const word_break = async (query: string, options: any) => {
       return;
     }
     
-    const clean = doc.dt.replaceAll(ZWSP, "");
-    const target = breaks.parse(clean).join(ZWSP);
-    const fields = {target: `<dl><dt>${target}</dt><dd>${doc.dd}</dd></dl>`};
+    const clean_target = doc.dt.replaceAll(ZWSP, "");
+    const break_target = breaks.parse(clean_target).join(ZWSP);
+    const fields = {target: `<dl><dt>${break_target}</dt><dd>${doc.dd}</dd></dl>`};
     if (result.kanji?.length > 0) {
-      const hint = hide_kanji(target, result.kanji);
-      Object.assign(fields, {hint: hint});
+      const clean_hint = result.hint.replaceAll(ZWSP, "");
+      const break_hint = breaks.parse(clean_hint).join(ZWSP);
+      Object.assign(fields, {hint: break_hint});
     } else {
       console.error("Kanji missing", result.id);
     }
