@@ -44,7 +44,7 @@ export const move_cards = async (query: string, deck: string, options: ApplyOpti
 };
 
 export const generate_target = async (query: string, options: ApplyOptions) => {
-  const results = await anki_query(query, "kanji", "target");
+  const results = await anki_query(query, "kanji", "kana", "target");
   
   with_dl_doc(results, async (result, doc) => {
     if (doc && doc.dd.length > 1) {
@@ -55,7 +55,8 @@ export const generate_target = async (query: string, options: ApplyOptions) => {
       console.log("Forcing new target:", result.target);
     }
 
-    const completion = await complete(simple_sentence(result.kanji));
+    const word = either(result.kanji, result.kana);
+    const completion = await complete(simple_sentence(word));
     if (completion === null) {
       return;
     }
