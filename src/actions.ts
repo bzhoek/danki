@@ -1,6 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
 import {loadDefaultJapaneseParser} from "budoux";
-import {anki_post, anki_query, complete, is_jukugo, to_katakana, update_fields,} from "./lib.ts";
+import {anki_named_query, anki_post, anki_query, complete, is_jukugo, to_katakana, update_fields,} from "./lib.ts";
 import {dl, extractXPaths} from "./dom.ts";
 
 const breaks = loadDefaultJapaneseParser();
@@ -118,14 +118,19 @@ export const hint = async (query: string, options: any) => {
 
   with_dl_doc(results, async (result, doc) => {
     if (doc.dt.length > 0 && (result.hint.length === 0 || options.force)) {
-      const clean_kanji = drop_na(result.kanji, result.meaning)
+      const clean_kanji = drop_na(result.kanji, result.meaning);
+      const replacement = either(clean_kanji, result.kana);
       const clean_target = doc.dt.replaceAll(ZWSP, "");
-      const clean_hint = hide_kanji(clean_target, clean_kanji);
+      const clean_hint = hide_kanji(clean_target, replacement);
       const break_hint = breaks.parse(clean_hint).join(ZWSP);
       await update_fields(result.id, {hint: break_hint}, options.noop);
     }
   });
 };
+
+function either(a: string, b: string) {
+  return a.length > 0 ? a : b;
+}
 
 function hide_kanji(sentence: string, kanji: string): string {
   const placeholder = "・".repeat(kanji.length);
