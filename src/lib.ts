@@ -56,8 +56,13 @@ export const anki_post = async (action: string, params: any, noop = false, retri
 }
 
 export async function anki_query(query: string, ...names: string[]) {
-  const ids = await anki_post("findNotes", { query: query });
-  const notes = await anki_post("notesInfo", { notes: ids.result });
+  return await anki_named_query("Matched", query, ...names);
+}
+
+export async function anki_named_query(name: string, query: string, ...names: string[]) {
+  const expanded = expand_query(query);
+  const ids = await anki_post("findNotes", {query: expanded});
+  const notes = await anki_post("notesInfo", {notes: ids.result});
   const results = notes.result.map((note: any) => {
     const result: any = Object.assign({}, {id: note.noteId, modelName: note.modelName});
     for (const name of names) {
@@ -67,8 +72,16 @@ export async function anki_query(query: string, ...names: string[]) {
     }
     return result;
   });
-  console.debug("Matched", results.length, "notes", results.map((n: { id: number }) => n.id));
+  console.debug(name, results.length, "notes", results.map((n: { id: number }) => n.id));
   return results;
+}
+
+// expand numeric query to note id query for convenience
+function expand_query(query: string): string {
+  if (/^\d+$/.test(query)) {
+    return `nid:${query}`;
+  }
+  return query;
 }
 
 export const complete = async (prompt: string) => {
