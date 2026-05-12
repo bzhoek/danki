@@ -115,7 +115,7 @@ async function kanji_notes(kanji: string): Promise<string> {
 }
 
 export const hint = async (query: string, options: any) => {
-  const results = await anki_query(query, "kanji", "meaning", "target", "hint");
+  const results = await anki_named_query("Hint", query, "kanji", "kana", "meaning", "target", "hint");
 
   with_dl_doc(results, async (result, doc) => {
     if (doc.dt.length > 0 && (result.hint.length === 0 || options.force)) {
