@@ -87,7 +87,7 @@ function expand_query(query: string): string {
 export const complete = async (prompt: string) => {
   // Allowed models https://platform.openai.com/ Project, Limits, but gpt-5-mini is much slower
   const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-5-mini",
     messages: [
       { "role": "user", "content": prompt },
     ],
