@@ -4,7 +4,7 @@
 import {Command} from "commander";
 import {complete, insert_onyomis, speech} from "./src/lib.ts";
 import {
-  ApplyOptions, generate_notes,
+  ApplyOptions, flag_cards, generate_notes,
   generate_speech,
   generate_target,
   hint, inbox_notes, move_cards, na_adjectives,
@@ -35,6 +35,8 @@ function query_apply(command: string, description: string, action: (...args: any
   return subcmd
 }
 
+query_apply("flag", "Flag card as orange", flag_cards, only_noop)
+  .argument("<flag>", "Flag number, 0 = remove")
 query_apply("move", "Move cards to deck", move_cards, only_noop)
   .argument("<deck>", "Target deck")
 query_apply("inbox", "Move cards of matching notes to Inbox", inbox_notes, only_noop);

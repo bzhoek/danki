@@ -1,10 +1,14 @@
 ## Usage
 
-Anki CLI tool in Deno for Japanese learners to organize decks and generate examples using OpenAI's GPT-4o.
+Anki CLI tool in Deno for Japanese learners to organize decks and generate examples using OpenAI's GPT-4o through 
+[AnkiConnect][connect].
+
+[connect]: https://git.sr.ht/~foosoft/anki-connect
 
 ```sh
 open https://platform.openai.com/settings/profile?tab=api-keys
 export OPENAI_API_KEY=sk-...
+
 $ ./main.ts
 Usage: main [options] [command]
 
