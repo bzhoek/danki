@@ -6,7 +6,7 @@ import {dl, extractXPaths} from "./dom.ts";
 const breaks = loadDefaultJapaneseParser();
 
 export const simple_sentence = (word: string) =>
-  `Geef in eenvoudig en alledaags Japans een voorbeeldzin met het woord: "${word}. Het liefst maximaal 20 tekens, maar liever 10, met zoveel mogelijk kanji. Gebruik geen persoonlijk voornaamwoord. Gebruik één regel voor de Japanse zin en één regel voor de Nederlandse vertaling.`;
+  `Geef in eenvoudig en alledaags Japans een voorbeeldzin met het woord: "${word}. Het liefst tussen 10 en 20 tekens en met een werkwoord en een partikel. Gebruik geen persoonlijk voornaamwoord. Gebruik één regel voor de Japanse zin en één regel voor de Nederlandse vertaling.`;
 
 export type ApplyOptions = {
   force: boolean;
