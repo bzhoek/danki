@@ -59,6 +59,36 @@ export const flag_cards = async (query: string, flag: string, options: ApplyOpti
   }
 };
 
+export const flag_ease = async (query: string, ease: string, flag: string, options: ApplyOptions) => {
+  const cards = await anki_post("findCards", {query: query});
+  console.log("Matches", cards.result.length, "cards", cards.result);
+
+  const reviews = await anki_post("getReviewsOfCards", {cards: cards.result}, options.noop);
+  
+  for (const card of cards.result) {
+    const review = reviews.result[card];
+    const last = review[review.length - 1];
+    // console.log(last)
+    if (last.type === 0) {
+      console.log("Learning", card, "skipping...");
+      continue;
+    }
+    if (last.ease !== parseInt(ease, 10)) {
+      console.log("At ease", last.ease, "for", card, "skipping...");
+      continue;
+    }
+    console.log("Setting", card, "to", flag);
+    const result = await anki_post("setSpecificValueOfCard", {
+      card: card,
+      keys: ["flags"],
+      newValues: [parseInt(flag, 10)]
+    }, options.noop);
+    if (Array.isArray(result.result[0])) {
+      console.error(result);
+    }
+  }
+};
+
 export const generate_target = async (query: string, options: ApplyOptions) => {
   const results = await anki_query(query, "kanji", "kana", "target");
   
