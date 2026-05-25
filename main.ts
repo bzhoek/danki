@@ -36,8 +36,8 @@ function query_apply(command: string, description: string, action: (...args: any
 }
 
 query_apply("ease", "Flag card as orange", flag_ease, only_noop)
-  .argument("<ease>", "Ease level to flag")
-  .argument("<flag>", "Flag number, 0 = remove")
+  .requiredOption("--ease <ease>", "Ease level to flag")
+  .requiredOption("--flag <flag>", "Flag number, 0 = remove")
 query_apply("flag", "Flag card as orange", flag_cards, only_noop)
   .argument("<flag>", "Flag number, 0 = remove")
 query_apply("move", "Move cards to deck", move_cards, only_noop)

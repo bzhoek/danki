@@ -59,7 +59,9 @@ export const flag_cards = async (query: string, flag: string, options: ApplyOpti
   }
 };
 
-export const flag_ease = async (query: string, ease: string, flag: string, options: ApplyOptions) => {
+export const flag_ease = async (query: string, options: any) => {
+  const flag = parseInt(options.flag, 10);
+  
   const cards = await anki_post("findCards", {query: query});
   console.log("Matches", cards.result.length, "cards", cards.result);
 
@@ -73,7 +75,7 @@ export const flag_ease = async (query: string, ease: string, flag: string, optio
       console.log("Learning", card, "skipping...");
       continue;
     }
-    if (last.ease !== parseInt(ease, 10)) {
+    if (last.ease !== options.ease) {
       console.log("At ease", last.ease, "for", card, "skipping...");
       continue;
     }
@@ -81,7 +83,7 @@ export const flag_ease = async (query: string, ease: string, flag: string, optio
     const result = await anki_post("setSpecificValueOfCard", {
       card: card,
       keys: ["flags"],
-      newValues: [parseInt(flag, 10)]
+      newValues: [flag]
     }, options.noop);
     if (Array.isArray(result.result[0])) {
       console.error(result);
