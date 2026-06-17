@@ -76,6 +76,15 @@ export async function anki_named_query(name: string, query: string, ...names: st
   return results;
 }
 
+export async function anki_notes(name: string, query: string) {
+  const expanded = expand_query(query);
+  const ids = await anki_post("findNotes", {query: expanded});
+  const response = await anki_post("notesInfo", {notes: ids.result});
+  const notes = response.result;
+  console.debug(name, notes.length, "notes", notes.map((n: any) => n.noteId));
+  return notes;
+}
+
 // expand numeric query to note id query for convenience
 function expand_query(query: string): string {
   if (/^\d+$/.test(query)) {

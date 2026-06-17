@@ -4,7 +4,7 @@
 import {Command} from "commander";
 import {complete, insert_onyomis, speech} from "./src/lib.ts";
 import {
-  ApplyOptions, flag_cards, flag_ease, generate_notes,
+  ApplyOptions, clean_nbsp, flag_cards, flag_ease, generate_notes,
   generate_speech,
   generate_target,
   hint, inbox_notes, move_cards, na_adjectives,
@@ -21,6 +21,8 @@ cli
 function sub_command(command: string, description: string) {
   return cli.command(command).description(description)
 }
+
+sub_command("clean", "Replace nbsp").action(clean_nbsp);
 
 const only_noop: ApplyOptions = {force: false, noop: true};
 const force_noop: ApplyOptions = {force: true, noop: true};

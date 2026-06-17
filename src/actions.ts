@@ -1,6 +1,15 @@
 // deno-lint-ignore-file no-explicit-any
 import {loadDefaultJapaneseParser} from "budoux";
-import {anki_named_query, anki_post, anki_query, complete, is_jukugo, to_katakana, update_fields,} from "./lib.ts";
+import {
+  anki_named_query,
+  anki_notes,
+  anki_post,
+  anki_query,
+  complete,
+  is_jukugo,
+  to_katakana,
+  update_fields,
+} from "./lib.ts";
 import {dl, extractXPaths} from "./dom.ts";
 
 const breaks = loadDefaultJapaneseParser();
@@ -217,6 +226,21 @@ export const word_break = async (query: string, options: any) => {
     }
     await update_fields(result.id, fields, options.noop);
   });
+};
+
+export const clean_nbsp = async () => {
+  const results = await anki_notes("Unclean", "&nbsp;");
+  for (const result of results) {
+    const changes = {}
+    for (const [key, value] of Object.entries(result.fields)) {
+      if (value.value.includes("&nbsp")) {
+        Object.assign(changes, {[key]: value.value.replaceAll("&nbsp;", " ")});
+      }
+    }
+    if (Object.keys(changes).length > 0) {
+      await update_fields(result.noteId, changes);
+    }
+  }
 };
 
 // inserts breaks from broken string into target by synchronizing index
