@@ -6,7 +6,7 @@ import {
   anki_post,
   anki_query, cloze_parts,
   complete,
-  is_jukugo,
+  is_jukugo, KANJI_KANA,
   to_katakana,
   update_fields,
 } from "./lib.ts";
@@ -403,9 +403,7 @@ export const translate = async (query: string, options: any) => {
       if(parts ?? false) {
         const target = parts[1] + parts[3]
         console.log("Translate", target);
-        // const kanji_kana = /[^\u3000-\u30FF\u4e00-\u9fff\uff00-\uffef]/g; // (kana)(kanji)(full-half)
-        const kanji_kana = "\\u3000-\\u30FF\\u4e00-\\u9fff\\uff00-\\uffef"; // (kana)(kanji)(full-half)
-        const only_kanja = new RegExp(`[^${kanji_kana}]`, "gi");
+        const only_kanja = new RegExp(`[^${KANJI_KANA}]`, "gi");
         const example = target.replaceAll(only_kanja, "")
         const definition = await wrapTranslation(doc.dt, example);
         Object.assign(fields, {sentence: definition});
@@ -428,7 +426,7 @@ export const translate = async (query: string, options: any) => {
 }
 
 async function wrapTranslation(definition: string, example: string): Promise<string> {
-  let translation = await complete(
+  const translation = await complete(
     `Vertaal in het Nederlands in één beknopte zin: ${example}`,
   ) ?? "";
   return `<dl><dt>${definition}</dt><dd>${translation}</dd></dl>`;
