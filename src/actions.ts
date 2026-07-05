@@ -4,7 +4,7 @@ import {
   anki_named_query,
   anki_notes,
   anki_post,
-  anki_query,
+  anki_query, cloze_parts,
   complete,
   is_jukugo,
   to_katakana,
@@ -26,7 +26,7 @@ export type ApplyOptions = {
 export const generate_speech = async (query: string, options: any) => {
   const results = await anki_query(query, "target", "context");
 
-  with_dl_doc(results, async (result, doc) => {
+  with_dl_docs(results, async (result, doc) => {
     if (doc === undefined || doc.dt.length < 2) {
       console.log("Skipping empty target:", result.target);
       return;
@@ -103,7 +103,7 @@ export const flag_ease = async (query: string, options: any) => {
 export const generate_target = async (query: string, options: ApplyOptions) => {
   const results = await anki_query(query, "kanji", "kana", "target");
   
-  with_dl_doc(results, async (result, doc) => {
+  with_dl_docs(results, async (result, doc) => {
     if (doc && doc.dd.length > 1) {
       if (!options.force) {
         console.log("Skipping existing target:", result.target);
@@ -174,7 +174,7 @@ async function kanji_notes(kanji: string): Promise<string> {
 export const hint = async (query: string, options: any) => {
   const results = await anki_named_query("Hint", query, "kanji", "kana", "meaning", "target", "hint");
 
-  with_dl_doc(results, async (result, doc) => {
+  with_dl_docs(results, async (result, doc) => {
     if (doc.dt.length > 0 && (result.hint.length === 0 || options.force)) {
       const clean_kanji = drop_na(result.kanji, result.meaning);
       const replacement = either(clean_kanji, result.kana);
@@ -203,7 +203,7 @@ export const ZWSP = "\u200B"; // zero-width space
 export const word_break = async (query: string, options: any) => {
   const results = await anki_query(query, "kanji", "target", "hint");
 
-  with_dl_doc(results, async (result, doc) => {
+  with_dl_docs(results, async (result, doc) => {
     if (doc.dt.includes(ZWSP) && !options.force) {
       console.warn("Already segmented:", doc.dt);
       return;
@@ -271,15 +271,24 @@ export const break_words = (sentence: string, separator: string = ZWSP): string 
   return broken;
 }
 
-function with_dl_doc(results: any, callback: (result: any, doc: any) => void) {
+function with_dl_docs(results: any, callback: (result: any, doc: any) => void, field: string = 'target') {
   for (const result of results) {
-    const doc = extractXPaths(dl(result.target), {dt: "/dl/dt", dd: "/dl/dd"});
-    if (doc === undefined) {
-      console.error("Cannot parse:", result.target);
-      continue;
-    }
-    callback(result, doc);
+    with_dl_doc(result, callback)
   }
+}
+
+function with_dl_doc(result: any, callback: (result: any, doc: any) => void, field: string = 'target') {
+  ['target', 'sentence'].forEach(field => {
+    const value = result[field];
+    if (value?.length > 0) {
+      const doc = extractXPaths(dl(value), {dt: "/dl/dt", dd: "/dl/dd"});
+      if (doc === undefined) {
+        console.error("Cannot parse:", value);
+      }
+      callback(result, doc);
+      return
+    }
+  })
 }
 
 export const onyomi = async (query: string, options: any) => {
@@ -377,9 +386,9 @@ export const onyomi_note = (result: any): string | null => {
 }
 
 export const translate = async (query: string, options: any) => {
-  const results = await anki_query(query, "target", "details");
+  const results = await anki_query(query, "target", "details", "sentence");
   
-  with_dl_doc(results, async (result, doc) => {
+  with_dl_docs(results, async (result, doc) => {
     if (doc.dd.length > 1) {
       if (!options.force) {
         console.log("Skipping", result.id, "with translation", doc.dd)
@@ -389,19 +398,38 @@ export const translate = async (query: string, options: any) => {
     }
 
     const fields = {}
-    const details = result.details.split("<br>")
-    let translation: string;
-    if (result.details.startsWith(doc.dd) && details.length >= 2) {
-      translation = result.details.split("<br>")[1];
-      Object.assign(fields, {details: ""});
+    if (result.modelName === "Grammar") {
+      const parts = cloze_parts(doc.dt);
+      if(parts ?? false) {
+        const target = parts[1] + parts[3]
+        console.log("Translate", target);
+        // const kanji_kana = /[^\u3000-\u30FF\u4e00-\u9fff\uff00-\uffef]/g; // (kana)(kanji)(full-half)
+        const kanji_kana = "\\u3000-\\u30FF\\u4e00-\\u9fff\\uff00-\\uffef"; // (kana)(kanji)(full-half)
+        const only_kanja = new RegExp(`[^${kanji_kana}]`, "gi");
+        const example = target.replaceAll(only_kanja, "")
+        const definition = await wrapTranslation(doc.dt, example);
+        Object.assign(fields, {sentence: definition});
+      }
     } else {
-      console.error("Cannot use details", result.id, result.details);
-      translation = await complete(
-        `Vertaal in het Nederlands in één beknopte zin: ${result.target}`,
-      ) ?? "";
+      const details = result.details.split("<br>")
+      let definition = "";
+      if (result.details.startsWith(doc.dd) && details.length >= 2) {
+        definition = result.details.split("<br>")[1];
+        Object.assign(fields, {details: ""});
+      } else {
+        console.error("Cannot use details", result.id, result.details);
+        definition = await wrapTranslation(doc.dt, result.target);
+      }
+      Object.assign(fields, {target: definition});
     }
 
-    Object.assign(fields, {target: `<dl><dt>${doc.dt}</dt><dd>${translation}</dd></dl>`});
     await update_fields(result.id, fields, options.noop);
   });
+}
+
+async function wrapTranslation(definition: string, example: string): Promise<string> {
+  let translation = await complete(
+    `Vertaal in het Nederlands in één beknopte zin: ${example}`,
+  ) ?? "";
+  return `<dl><dt>${definition}</dt><dd>${translation}</dd></dl>`;
 }

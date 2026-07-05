@@ -4,8 +4,15 @@ import {delay} from "jsr:@std/async/delay";
 import {Semaphore} from "jsr:@std/async/unstable-semaphore";
 
 const openai = new OpenAI();
+export const CLOZE1_RE = /(.*?)({{.*?::)(.*?)(::.+)?(}})/;
+export const cloze_parts = (cloze: string): any => cloze.match(CLOZE1_RE);
 
 export const update_fields = (id: number, fields: any, noop = false) => {
+  if (Object.keys(fields).length === 0) {
+    console.error("No fields to update", id, "with fields", fields);
+    return;
+  }
+
   if (noop) {
     console.log("No-op updateNote", id, "with fields", fields);
     return;

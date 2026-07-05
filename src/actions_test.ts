@@ -1,6 +1,7 @@
 import {assertEquals, assertExists} from "https://deno.land/std/assert/mod.ts";
 import {describe, it} from "https://deno.land/std/testing/bdd.ts";
 import {break_words, onyomi_note, transfer_breaks} from "./actions.ts";
+import {CLOZE1_RE} from "./lib.ts";
 
 describe("On'yomi conversion", () => {
   it("leaves な alone", () => {
@@ -13,7 +14,6 @@ describe("On'yomi conversion", () => {
   })
 })
 
-const CLOZE1_RE = /(.*?)({{.*?::)(.*?)(::.+)?(}})/;
 
 function cloze_sentence(cloze: string): string | null {
   const match = cloze.match(CLOZE1_RE);
