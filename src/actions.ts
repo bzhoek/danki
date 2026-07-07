@@ -385,6 +385,23 @@ export const onyomi_note = (result: any): string | null => {
   return katakana + remainder;
 }
 
+export const regex_substitution = async (query: string, field: string, search: string, replace: string, options: any) => {
+  const results = await anki_query(query, field);
+  const regex = new RegExp(search, "i");
+
+  for (const result of results) {
+    const value = result[field];
+    const match = value.match(regex);
+    if (match) {
+      if (options.noop) {
+        console.log(match);
+      }
+      const replacement = value.replace(regex, replace);
+      await update_fields(result.id, {[field]: replacement}, options.noop);
+    }
+  }
+}
+
 export const translate = async (query: string, options: any) => {
   const results = await anki_query(query, "target", "details", "sentence");
   
