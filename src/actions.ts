@@ -26,7 +26,7 @@ export type ApplyOptions = {
 export const generate_speech = async (query: string, options: any) => {
   const results = await anki_query(query, "target", "context");
 
-  with_dl_docs(results, async (result, doc) => {
+  with_dl_docs(results, ["target"], async (result, doc) => {
     if (doc === undefined || doc.dt.length < 2) {
       console.log("Skipping empty target:", result.target);
       return;
@@ -103,7 +103,7 @@ export const flag_ease = async (query: string, options: any) => {
 export const generate_target = async (query: string, options: ApplyOptions) => {
   const results = await anki_query(query, "kanji", "kana", "target");
   
-  with_dl_docs(results, async (result, doc) => {
+  with_dl_docs(results, ["target"], async (result, doc) => {
     if (doc && doc.dd.length > 1) {
       if (!options.force) {
         console.log("Skipping existing target:", result.target);
@@ -115,6 +115,7 @@ export const generate_target = async (query: string, options: ApplyOptions) => {
     const word = either(result.kanji, result.kana);
     const completion = await complete(simple_sentence(word));
     if (completion === null) {
+      console.error("No completion for", word);
       return;
     }
 
@@ -174,7 +175,7 @@ async function kanji_notes(kanji: string): Promise<string> {
 export const hint = async (query: string, options: any) => {
   const results = await anki_named_query("Hint", query, "kanji", "kana", "meaning", "target", "hint");
 
-  with_dl_docs(results, async (result, doc) => {
+  with_dl_docs(results, ["target"], async (result, doc) => {
     if (doc.dt.length > 0 && (result.hint.length === 0 || options.force)) {
       const clean_kanji = drop_na(result.kanji, result.meaning);
       const replacement = either(clean_kanji, result.kana);
@@ -201,11 +202,15 @@ function hide_kanji(sentence: string, kanji: string): string {
 export const ZWSP = "\u200B"; // zero-width space
 
 export const word_break = async (query: string, options: any) => {
-  const results = await anki_query(query, "kanji", "target", "hint");
+  const results = await anki_named_query("Break", query, "kanji", "target", "hint");
 
-  with_dl_docs(results, async (result, doc) => {
+  with_dl_docs(results, ["target"], async (result, doc) => {
+    if (doc === undefined) {
+      console.error("FAIL", result, doc);
+      return;
+    }
     if (doc.dt.includes(ZWSP) && !options.force) {
-      console.warn("Already segmented:", doc.dt);
+      console.info("Already segmented:", doc.dt);
       return;
     }
 
@@ -271,23 +276,24 @@ export const break_words = (sentence: string, separator: string = ZWSP): string 
   return broken;
 }
 
-function with_dl_docs(results: any, callback: (result: any, doc: any) => void, field: string = 'target') {
+function with_dl_docs(results: any, fields: string[], callback: (result: any, doc: any) => void, ) {
   for (const result of results) {
-    with_dl_doc(result, callback)
+    with_dl_doc(result, fields, callback)
   }
 }
 
-function with_dl_doc(result: any, callback: (result: any, doc: any) => void, field: string = 'target') {
-  ['target', 'sentence'].forEach(field => {
+function with_dl_doc(result: any, fields: string[], callback: (result: any, doc: any) => void) {
+  fields.forEach(field => {
     const value = result[field];
-    if (value?.length > 0) {
-      const doc = extractXPaths(dl(value), {dt: "/dl/dt", dd: "/dl/dd"});
-      if (doc === undefined) {
-        console.error("Cannot parse:", value);
-      }
-      callback(result, doc);
-      return
+    if (value === undefined) {
+      return;
     }
+
+    const doc = extractXPaths(dl(value), {dt: "/dl/dt", dd: "/dl/dd"});
+    if (doc === undefined) {
+      console.error("Cannot parse:", value);
+    }
+    callback(result, doc);
   })
 }
 
@@ -403,15 +409,15 @@ export const regex_substitution = async (query: string, field: string, search: s
 }
 
 export const translate = async (query: string, options: any) => {
-  const results = await anki_query(query, "target", "details", "sentence");
+  const results = await anki_named_query("Translate", query, "target", "details", "sentence");
   
-  with_dl_docs(results, async (result, doc) => {
+  with_dl_docs(results, ["target", "sentence"], async (result, doc) => {
     if (doc.dd.length > 1) {
       if (!options.force) {
-        console.log("Skipping", result.id, "with translation", doc.dd)
+        console.log("Skipping", result.id, "with translation:", doc.dd)
         return;
       }
-      console.log("Overwriting", result.id, "with translation", doc.dd)
+      console.log("Overwriting", result.id, "with translation:", doc.dd)
     }
 
     const fields = {}
