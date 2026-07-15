@@ -8,19 +8,22 @@ export const CLOZE1_RE = /(.*?)({{.*?::)(.*?)(::.+)?(}})/;
 export const cloze_parts = (cloze: string): any => cloze.match(CLOZE1_RE);
 // const kanji_kana = /[^\u3000-\u30FF\u4e00-\u9fff\uff00-\uffef]/g; // (kana)(kanji)(full-half)
 export const KANJI_KANA = "\\u3000-\\u30FF\\u4e00-\\u9fff\\uff00-\\uffef"; // (kana)(kanji)(full-half)
+export const OK = "✓";
+export const ERR = "𐄂";
+export const NOP = "▹";
 
 export const update_fields = (id: number, fields: any, noop = false) => {
   if (Object.keys(fields).length === 0) {
-    console.error("No fields to update", id, "with fields", fields);
+    console.error(ERR, "No fields to update", id, "with fields", fields);
     return;
   }
 
   if (noop) {
-    console.log("No-op updateNote", id, "with fields", fields);
+    console.log(NOP, "No-op updateNote", id, "with fields", fields);
     return;
   }
 
-  console.log("Update note", id, "with fields", fields);
+  console.log(OK, "Update note", id, "with fields", fields);
   const changes = {
     note: {
       id: id,
@@ -34,7 +37,7 @@ export const update_fields = (id: number, fields: any, noop = false) => {
 const semaphore = new Semaphore(2);
 export const anki_post = async (action: string, params: any, noop = false, retries = 3, delay_ms = 1000) => {
   if (noop) {
-    console.log("No-op", `"${action}"`, "with params", JSON.stringify(params));
+    console.log(NOP, "No-op", `"${action}"`, "with params", JSON.stringify(params));
     return;
   }
 
@@ -52,11 +55,11 @@ export const anki_post = async (action: string, params: any, noop = false, retri
       let res = await fetch('http://127.0.0.1:8765', {method: 'post', body: JSON.stringify(request)})
       let json = await res.json();
       if (json.error) {
-        console.error(json.error);
+        console.error(ERR, json.error);
       }
       return json;
     } catch (err) {
-      console.warn(`${err} encountered. Retry ${attempt}/${retries}...`);
+      console.warn(NOP, `${err} encountered. Retry ${attempt}/${retries}...`);
       await delay(delay_ms);
     } finally {
       semaphore.release();
@@ -81,7 +84,7 @@ export async function anki_named_query(name: string, query: string, ...names: st
     }
     return result;
   });
-  console.debug(name, results.length, "notes", results.map((n: { id: number }) => n.id));
+  console.info(name, results.length, "notes", results.map((n: { id: number }) => n.id));
   return results;
 }
 
@@ -90,7 +93,7 @@ export async function anki_notes(name: string, query: string) {
   const ids = await anki_post("findNotes", {query: expanded});
   const response = await anki_post("notesInfo", {notes: ids.result});
   const notes = response.result;
-  console.debug(name, notes.length, "notes", notes.map((n: any) => n.noteId));
+  console.info(name, notes.length, "notes", notes.map((n: any) => n.noteId));
   return notes;
 }
 
@@ -209,11 +212,11 @@ export const insert_onyomis = async (csv: string) => {
   for (const word of words) {
     const id = await find_yomi_first(word);
     if (id === undefined) {
-      console.log("No note found for", word);
+      console.log(ERR, "No note found for", word);
       const target = csv.replace(",", "");
       const placeholder = '・'.repeat(word.length);
       const hint = target.replace(word, placeholder);
-      console.log("Try searching for", hint);
+      console.log(NOP, "Try searching for", hint);
       const add = {
         "note": {
           "deckName": "0-Inbox",
@@ -233,12 +236,11 @@ export const insert_onyomis = async (csv: string) => {
           "tags": "tags"
         }
       }
-      console.log(add)
       post('addNote', add).then(json => {
-        console.log("Added", word, json)
+        console.log(OK, "Added", word, json)
       })
     } else {
-      console.log("Found note", id, "for", word);
+      console.log(NOP, "Found note", id, "for", word);
     }
   }
 };

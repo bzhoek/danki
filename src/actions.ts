@@ -4,11 +4,12 @@ import {
   anki_named_query,
   anki_notes,
   anki_post,
-  anki_query, cloze_parts,
+  cloze_parts,
   complete,
   is_jukugo, KANJI_KANA,
   to_katakana,
   update_fields,
+  OK, NOP, ERR
 } from "./lib.ts";
 import {dl, extractXPaths} from "./dom.ts";
 
@@ -28,7 +29,7 @@ export const generate_speech = async (query: string, options: any) => {
 
   foreach_dl(results, ["target"], async (result, doc) => {
     if (doc === undefined || doc.dt.length < 2) {
-      console.log("Skipping empty target:", result.target);
+      console.log(NOP, "Skipping empty target:", result.target);
       return;
     }
   });
@@ -44,26 +45,27 @@ export const inbox_notes = async (query: string, options: ApplyOptions) => {
 export const move_cards = async (query: string, deck: string, options: ApplyOptions) => {
   const cards = await anki_post("findCards", {query: query});
   if (cards.result) {
-    console.log("Matches", cards.result.length, "cards", cards.result);
+    console.log("Move", cards.result.length, "cards", cards.result);
     const moved = await anki_post("changeDeck", {cards: cards.result, deck: deck}, options.noop);
     if (cards.result.length > 0 && moved && moved.result == null) {
-      console.log("Moved", cards.result.length, "cards to", deck);
+      console.log(OK, "Moved", cards.result.length, "cards to", deck);
     }
   }
 };
 
 export const flag_cards = async (query: string, flag: string, options: ApplyOptions) => {
   const cards = await anki_post("findCards", {query: query});
-  console.log("Matches", cards.result.length, "cards", cards.result);
+  const flag_int = parseInt(flag, 10);
+  console.log("Flag", cards.result.length, "cards", cards.result, "to", flag_int);
 
   for (const card of cards.result) {
     const result = await anki_post("setSpecificValueOfCard", {
       card: card,
       keys: ["flags"],
-      newValues: [parseInt(flag, 10)]
+      newValues: [flag_int]
     }, options.noop);
     if (Array.isArray(result.result[0])) {
-      console.error(result);
+      console.error(ERR, result);
     }
   }
 };
@@ -73,7 +75,7 @@ export const flag_ease = async (query: string, options: any) => {
   const flag = parseInt(options.flag, 10);
   
   const cards = await anki_post("findCards", {query: query});
-  console.log("Flag", cards.result.length, "to", flag, "cards", cards.result);
+  console.log("Flag", cards.result.length, "cards", cards.result, "to", flag);
 
   const reviews = await anki_post("getReviewsOfCards", {cards: cards.result}, options.noop);
   
@@ -81,24 +83,24 @@ export const flag_ease = async (query: string, options: any) => {
     const review = reviews.result[card];
     const last = review[review.length - 1];
     if (last.type === 0) {
-      console.log("Learning", card, "skipping...");
+      console.log(NOP, "Learning", card, "skipping...");
       continue;
     }
     
     // console.log(typeof last.ease, typeof ease);
     if (last.ease !== ease) {
-      console.log("At ease", last.ease, "for", card, "skipping...");
+      console.log(NOP, "At ease", last.ease, "for", card, "skipping...");
       continue;
     }
     
-    console.log("Setting", card, "to", flag);
+    console.log(OK, "Setting", card, "to", flag);
     const result = await anki_post("setSpecificValueOfCard", {
       card: card,
       keys: ["flags"],
       newValues: [flag]
     }, options.noop);
     if (Array.isArray(result.result[0])) {
-      console.error(result);
+      console.error(ERR, result);
     }
   }
 };
@@ -109,16 +111,16 @@ export const generate_target = async (query: string, options: ApplyOptions) => {
   foreach_dl(results, ["target"], async (result, doc) => {
     if (doc && doc.dd.length > 1) {
       if (!options.force) {
-        console.log("Skipping existing target:", result.target);
+        console.log(NOP, "Skipping existing target:", result.target);
         return;
       }
-      console.log("Forcing new target:", result.target);
+      console.log(OK, "Forcing new target:", result.target);
     }
 
     const word = either(result.kanji, result.kana);
     const completion = await complete(simple_sentence(word));
     if (completion === null) {
-      console.error("No completion for", word);
+      console.error(ERR, "No completion for", word);
       return;
     }
 
@@ -149,10 +151,10 @@ export const generate_notes = async (query: string, options: ApplyOptions) => {
       const value = result[notes];
       if (value?.length > 0) {
         if(!options.force) {
-          console.warn("Skipping existing notes for", reading, ":", value);
+          console.warn(NOP, "Skipping existing notes for", reading, ":", value);
           continue;
         }
-        console.warn("Force overwriting notes for", reading, ":", value);
+        console.warn(OK, "Force overwriting notes for", reading, ":", value);
       }
 
       const kanjis = result[reading].replaceAll(/[^一-龘]/g, "");
@@ -209,16 +211,16 @@ export const word_break = async (query: string, options: any) => {
 
   foreach_dl(results, ["target"], async (result, doc) => {
     if (doc === undefined) {
-      console.error("FAIL", result, doc);
+      console.error(ERR, "FAIL", result, doc);
       return;
     }
     if (doc.dt.includes(ZWSP) && !options.force) {
-      console.info("Already segmented:", doc.dt);
+      console.info(NOP, "Already segmented:", doc.dt);
       return;
     }
 
     if (doc.dt.length < 8 || options.force) {
-      console.warn("Skipping short:", doc.dt);
+      console.warn(NOP, "Skipping short:", doc.dt);
       return;
     }
     
@@ -230,7 +232,7 @@ export const word_break = async (query: string, options: any) => {
       const break_hint = breaks.parse(clean_hint).join(ZWSP);
       Object.assign(fields, {hint: break_hint});
     } else {
-      console.error("Kanji missing", result.id);
+      console.error(ERR, "Kanji missing", result.id);
     }
     await update_fields(result.id, fields, options.noop);
   });
@@ -296,7 +298,7 @@ function extract_dl(result: any, fields: string[], callback: (result: any, doc: 
 
     const doc = extractXPaths(dl(value), {dt: "/dl/dt", dd: "/dl/dd"});
     if (doc === undefined) {
-      console.error("Cannot parse:", value);
+      console.error(ERR, "Cannot parse:", value);
     }
     callback(result, doc);
   })
@@ -327,7 +329,7 @@ export const nacs_adjectives = async (query: string, options: any) => {
       if (word + "な" === result.kanji) {
         console.log("Have", result.kanji);
       } else if (result.kanji !== word) {
-        console.error("Different word", result.kanji, "from", word);
+        console.error("𐄂 Different word", result.kanji, "from", word);
         continue;
       }
       await na_note(result, options);
@@ -379,7 +381,7 @@ export const onyomi_note = (result: any): string | null => {
   const kanji = drop_na(result.kanji, result.meaning)
 
   if (!is_jukugo(kanji)) {
-    console.warn("Not jukugo", kanji);
+    console.error(ERR, "Not jukugo", kanji);
     return null;
   }
 
@@ -405,7 +407,7 @@ export const regex_substitution = async (query: string, field: string, search: s
     const match = value.match(regex);
     if (match) {
       if (options.noop) {
-        console.log(match);
+        console.log(NOP, match);
       }
       const replacement = value.replace(regex, replace);
       await update_fields(result.id, {[field]: replacement}, options.noop);
@@ -419,10 +421,10 @@ export const translate = async (query: string, options: any) => {
   foreach_dl(results, ["target", "sentence"], async (result, doc) => {
     if (doc.dd.length > 1) {
       if (!options.force) {
-        console.log("Skipping", result.id, "with translation:", doc.dd)
+        console.log(NOP, "Skipping", result.id, "with translation:", doc.dd)
         return;
       }
-      console.log("Overwriting", result.id, "with translation:", doc.dd)
+      console.log(OK, "Overwriting", result.id, "with translation:", doc.dd)
     }
 
     const fields = {}
@@ -430,7 +432,7 @@ export const translate = async (query: string, options: any) => {
       const parts = cloze_parts(doc.dt);
       if(parts ?? false) {
         const target = parts[1] + parts[3]
-        console.log("Translate", target);
+        console.log(OK, "Translate", target);
         const only_kanja = new RegExp(`[^${KANJI_KANA}]`, "gi");
         const example = target.replaceAll(only_kanja, "")
         const definition = await definition_list(doc.dt, example);
@@ -443,7 +445,7 @@ export const translate = async (query: string, options: any) => {
         definition = result.details.split("<br>")[1];
         Object.assign(fields, {details: ""});
       } else {
-        console.error("Cannot use details", result.id, result.details);
+        console.info(NOP, "Cannot use details", result.id, result.details);
         definition = await definition_list(doc.dt, result.target);
       }
       Object.assign(fields, {target: definition});

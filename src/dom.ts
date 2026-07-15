@@ -17,7 +17,7 @@ export function extractXPaths(xml: string, keys: any): any | undefined {
     }
     return result;
   } catch {
-    console.error("Couldn't parse", xml);
+    console.warn(ERR, "Couldn't parse", xml);
     return undefined;
   }
 }
