@@ -10,7 +10,7 @@ describe("On'yomi conversion", () => {
       kanji: "綺麗な",
       kana: "きれいな",
     });
-    assertEquals("キレイな", result);
+    assertEquals(result, "キレイな");
   })
 })
 
@@ -18,27 +18,27 @@ describe("Word breaking", () => {
   it("breaks hiragana", () => {
     const cloze = "じゃないみたいです";
     const broken = break_words(cloze, "/");
-    assertEquals("じゃないみたい/です", broken);
+    assertEquals(broken, "じゃないみたい/です");
   })
   it("breaks spanning elements", () => {
     const cloze = "ひらがなで書{{c1::いていただけませんか::beleefd verzoek}}";
     const sentence = cloze_sentence(cloze);
     assertExists(sentence);
-    assertEquals("ひらがなで書いていただけませんか", sentence);
+    assertEquals(sentence, "ひらがなで書いていただけませんか");
     const broken = break_words(sentence, "/");
-    assertEquals("ひらがなで/書いていただけませんか", broken);
+    assertEquals(broken, "ひらがなで/書いていただけませんか");
     const merged = transfer_breaks(cloze, broken, "/");
-    assertEquals("ひらがなで/書{{c1::いていただけませんか::beleefd verzoek}}", merged);
+    assertEquals(merged, "ひらがなで/書{{c1::いていただけませんか::beleefd verzoek}}");
   })
   it("breaks all elements", () => {
     const cloze = "リンさんは歌が上手{{c1::じゃないみたいです::じゃないです het lijkt}}";
     const sentence = cloze_sentence(cloze);
     assertExists(sentence);
-    assertEquals("リンさんは歌が上手じゃないみたいです", sentence);
+    assertEquals(sentence, "リンさんは歌が上手じゃないみたいです");
     const broken = break_words(sentence, "/");
-    assertEquals("リンさんは/歌が/上手じゃないみたい/です", broken);
+    assertEquals(broken, "リンさんは/歌が/上手じゃないみたい/です");
     const merged = transfer_breaks(cloze, broken, "/");
-    assertEquals("リンさんは/歌が/上手{{c1::じゃないみたい/です::じゃないです het lijkt}}", merged);
+    assertEquals(merged, "リンさんは/歌が/上手{{c1::じゃないみたい/です::じゃないです het lijkt}}");
   })
   it("breaks suffix", () => {
     const cloze = "あまり寝なかった{{c1::から::reden}}、疲れています";
