@@ -207,6 +207,19 @@ function hide_kanji(sentence: string, kanji: string): string {
 
 export const ZWSP = "\u200B"; // zero-width space
 
+function check_doc(doc: any): number {
+  if (doc.dt.includes(ZWSP)) {
+    console.info(NOP, "Already segmented:", doc.dt);
+    return 1;
+  }
+  if (doc.dt.length < 8) {
+    console.warn(NOP, "Skipping short:", doc.dt);
+    return 2;
+  }
+
+  return 0;
+}
+
 export const word_break = async (query: string, options: any) => {
   const results = await anki_named_query("Break", query, "kanji", "target", "hint", "sentence");
 
@@ -215,18 +228,15 @@ export const word_break = async (query: string, options: any) => {
       console.error(ERR, "FAIL", result, doc);
       return;
     }
-    if (doc.dt.includes(ZWSP) && !options.force) {
-      console.info(NOP, "Already segmented:", doc.dt);
-      return;
-    }
-
-    if (doc.dt.length < 8 || options.force) {
-      console.warn(NOP, "Skipping short:", doc.dt);
-      return;
+    if (check_doc(doc) > 0) {
+      if (!options.force) {
+        return;
+      }
+      console.warn(OK, "Forcing: ", doc.dt);
     }
     
     if (result.modelName === "Grammar") {
-      const cloze = result.sentence;
+      const cloze = clean_breaks(result.sentence);
       console.debug(NOP, cloze);
       const sentence = cloze_sentence(cloze);
       const broken = break_words(sentence);
@@ -283,11 +293,17 @@ function insert_at(original: string, index: number, char: string): string {
   return original.slice(0, index) + char + original.slice(index);
 }
 
+const clean_breaks = (sentence: string, separator: string = ZWSP): string =>
+  sentence.replaceAll(separator, "");
+
 export const break_words = (sentence: string, separator: string = ZWSP): string => {
-  const clean = sentence.replaceAll(separator, "");
+  const clean = clean_breaks(sentence, separator);
   let broken = breaks.parse(clean).join(separator);
   if (broken.endsWith("です")) {
     broken = insert_at(broken, broken.length - 2, separator)
+  }
+  if (broken.endsWith("います")) {
+    broken = insert_at(broken, broken.length - 3, separator)
   }
   return broken;
 }
