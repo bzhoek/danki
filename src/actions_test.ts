@@ -1,7 +1,7 @@
 import {assertEquals, assertExists} from "https://deno.land/std/assert/mod.ts";
 import {describe, it} from "https://deno.land/std/testing/bdd.ts";
 import {break_words, onyomi_note, transfer_breaks} from "./actions.ts";
-import {CLOZE1_RE} from "./lib.ts";
+import {cloze_sentence} from "./lib.ts";
 
 describe("On'yomi conversion", () => {
   it("leaves な alone", () => {
@@ -13,15 +13,6 @@ describe("On'yomi conversion", () => {
     assertEquals("キレイな", result);
   })
 })
-
-
-function cloze_sentence(cloze: string): string | null {
-  const match = cloze.match(CLOZE1_RE);
-  if (match) {
-    return match[1] + match[3];
-  }
-  return null;
-}
 
 describe("Word breaking", () => {
   it("breaks hiragana", () => {
@@ -48,5 +39,15 @@ describe("Word breaking", () => {
     assertEquals("リンさんは/歌が/上手じゃないみたい/です", broken);
     const merged = transfer_breaks(cloze, broken, "/");
     assertEquals("リンさんは/歌が/上手{{c1::じゃないみたい/です::じゃないです het lijkt}}", merged);
+  })
+  it("breaks suffix", () => {
+    const cloze = "あまり寝なかった{{c1::から::reden}}、疲れています";
+    const sentence = cloze_sentence(cloze);
+    assertExists(sentence);
+    assertEquals(sentence, "あまり寝なかったから、疲れています");
+    const broken = break_words(sentence, "/");
+    assertEquals(broken, "あまり寝なかったから、/疲れています");
+    const merged = transfer_breaks(cloze, broken, "/");
+    assertEquals(merged, "あまり寝なかった{{c1::から::reden}}、/疲れています");
   })
 })

@@ -1,5 +1,6 @@
 import {Document, DOMParser} from "xmldom";
 import xpath from "xpath";
+import {ERR} from "./lib.ts";
 
 export function dl(value: string): string {
   if (value?.startsWith("<dl>")) {

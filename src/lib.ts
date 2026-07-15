@@ -4,13 +4,21 @@ import {delay} from "jsr:@std/async/delay";
 import {Semaphore} from "jsr:@std/async/unstable-semaphore";
 
 const openai = new OpenAI();
-export const CLOZE1_RE = /(.*?)({{.*?::)(.*?)(::.+)?(}})/;
+export const CLOZE1_RE = /(.*?)({{.*?::)(.*?)(::.+)?(}})(.*)/;
 export const cloze_parts = (cloze: string): any => cloze.match(CLOZE1_RE);
 // const kanji_kana = /[^\u3000-\u30FF\u4e00-\u9fff\uff00-\uffef]/g; // (kana)(kanji)(full-half)
 export const KANJI_KANA = "\\u3000-\\u30FF\\u4e00-\\u9fff\\uff00-\\uffef"; // (kana)(kanji)(full-half)
 export const OK = "✓";
 export const ERR = "𐄂";
 export const NOP = "▹";
+
+export function cloze_sentence(cloze: string): string {
+  const match = cloze.match(CLOZE1_RE);
+  if (match) {
+    return match[1] + match[3] + match[6];
+  }
+  return cloze;
+}
 
 export const update_fields = (id: number, fields: any, noop = false) => {
   if (Object.keys(fields).length === 0) {
