@@ -5,6 +5,7 @@ import {
   anki_notes,
   anki_post,
   cloze_parts,
+  cloze_sentence,
   complete,
   is_jukugo, KANJI_KANA,
   to_katakana,
@@ -207,9 +208,9 @@ function hide_kanji(sentence: string, kanji: string): string {
 export const ZWSP = "\u200B"; // zero-width space
 
 export const word_break = async (query: string, options: any) => {
-  const results = await anki_named_query("Break", query, "kanji", "target", "hint");
+  const results = await anki_named_query("Break", query, "kanji", "target", "hint", "sentence");
 
-  foreach_dl(results, ["target"], async (result, doc) => {
+  foreach_dl(results, ["target", "sentence"], async (result, doc) => {
     if (doc === undefined) {
       console.error(ERR, "FAIL", result, doc);
       return;
@@ -224,15 +225,24 @@ export const word_break = async (query: string, options: any) => {
       return;
     }
     
-    const clean_target = doc.dt.replaceAll(ZWSP, "");
-    const break_target = breaks.parse(clean_target).join(ZWSP);
-    const fields = {target: `<dl><dt>${break_target}</dt><dd>${doc.dd}</dd></dl>`};
+    if (result.modelName === "Grammar") {
+      const cloze = result.sentence;
+      console.debug(NOP, cloze);
+      const sentence = cloze_sentence(cloze);
+      const broken = break_words(sentence);
+      const merged = transfer_breaks(cloze, broken);
+      const fields = {sentence: merged};
+      await update_fields(result.id, fields, options.noop);
+      return;
+    }
+    
+    const broken_target = break_words(doc.dt);
+    const fields = {target: `<dl><dt>${broken_target}</dt><dd>${doc.dd}</dd></dl>`};
     if (result.kanji?.length > 0) {
-      const clean_hint = result.hint.replaceAll(ZWSP, "");
-      const break_hint = breaks.parse(clean_hint).join(ZWSP);
-      Object.assign(fields, {hint: break_hint});
+      const broken_hint = break_words(result.hint);
+      Object.assign(fields, {hint: broken_hint});
     } else {
-      console.error(ERR, "Kanji missing", result.id);
+      console.warn(ERR, "No kanji", result.id);
     }
     await update_fields(result.id, fields, options.noop);
   });
