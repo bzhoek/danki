@@ -57,7 +57,7 @@ export const move_cards = async (query: string, deck: string, options: ApplyOpti
 export const flag_cards = async (query: string, flag: string, options: ApplyOptions) => {
   const cards = await anki_post("findCards", {query: query});
   const flag_int = parseInt(flag, 10);
-  console.log("Flag", cards.result.length, "cards", cards.result, "to", flag_int);
+  console.log("Flag", cards.result.length, "cards to", flag_int, "for", cards.result);
 
   for (const card of cards.result) {
     const result = await anki_post("setSpecificValueOfCard", {
@@ -76,7 +76,7 @@ export const flag_ease = async (query: string, options: any) => {
   const flag = parseInt(options.flag, 10);
   
   const cards = await anki_post("findCards", {query: query});
-  console.log("Flag", cards.result.length, "cards", cards.result, "to", flag);
+  console.log("Flag", cards.result.length, "cards to", flag, "for", cards.result);
 
   const reviews = await anki_post("getReviewsOfCards", {cards: cards.result}, options.noop);
   
