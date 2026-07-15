@@ -24,9 +24,9 @@ export type ApplyOptions = {
 
 // use existing google speech generation
 export const generate_speech = async (query: string, options: any) => {
-  const results = await anki_query(query, "target", "context");
+  const results = await anki_named_query("Speech", query, "target", "context");
 
-  with_dl_docs(results, ["target"], async (result, doc) => {
+  foreach_dl(results, ["target"], async (result, doc) => {
     if (doc === undefined || doc.dt.length < 2) {
       console.log("Skipping empty target:", result.target);
       return;
@@ -35,7 +35,7 @@ export const generate_speech = async (query: string, options: any) => {
 }
 
 export const inbox_notes = async (query: string, options: ApplyOptions) => {
-  const results = await anki_query(query);
+  const results = await anki_named_query("Move", query);
   for (const result of results) {
     await move_cards(`nid:${result.id}`, "0-Inbox", options);
   }
@@ -104,9 +104,9 @@ export const flag_ease = async (query: string, options: any) => {
 };
 
 export const generate_target = async (query: string, options: ApplyOptions) => {
-  const results = await anki_query(query, "kanji", "kana", "target");
+  const results = await anki_named_query("Target", query, "kanji", "kana", "target");
   
-  with_dl_docs(results, ["target"], async (result, doc) => {
+  foreach_dl(results, ["target"], async (result, doc) => {
     if (doc && doc.dd.length > 1) {
       if (!options.force) {
         console.log("Skipping existing target:", result.target);
@@ -138,7 +138,7 @@ const NOTES: FieldMap = {
 };
 
 export const generate_notes = async (query: string, options: ApplyOptions) => {
-  const results = await anki_query(query, ...[...Object.keys(NOTES), ...Object.values(NOTES)]);
+  const results = await anki_named_query("Notes", query, ...[...Object.keys(NOTES), ...Object.values(NOTES)]);
   
   for (const result of results) {
     const readings = Object.keys(result).filter(k => NOTES[k]);
@@ -170,7 +170,7 @@ export const generate_notes = async (query: string, options: ApplyOptions) => {
 };
 
 async function kanji_notes(kanji: string): Promise<string> {
-  const results = await anki_query(`(note:OnYomi or note:KunYomi or note:OnKanji) kanji:${kanji}`, "meaning");
+  const results = await anki_named_query("Kanji", `(note:OnYomi or note:KunYomi or note:OnKanji) kanji:${kanji}`, "meaning");
 
   return results.map((result: any) => `<b>${result.meaning}</b> ${kanji}`) ?? ""
 }
@@ -178,7 +178,7 @@ async function kanji_notes(kanji: string): Promise<string> {
 export const hint = async (query: string, options: any) => {
   const results = await anki_named_query("Hint", query, "kanji", "kana", "meaning", "target", "hint");
 
-  with_dl_docs(results, ["target"], async (result, doc) => {
+  foreach_dl(results, ["target"], async (result, doc) => {
     if (doc.dt.length > 0 && (result.hint.length === 0 || options.force)) {
       const clean_kanji = drop_na(result.kanji, result.meaning);
       const replacement = either(clean_kanji, result.kana);
@@ -207,7 +207,7 @@ export const ZWSP = "\u200B"; // zero-width space
 export const word_break = async (query: string, options: any) => {
   const results = await anki_named_query("Break", query, "kanji", "target", "hint");
 
-  with_dl_docs(results, ["target"], async (result, doc) => {
+  foreach_dl(results, ["target"], async (result, doc) => {
     if (doc === undefined) {
       console.error("FAIL", result, doc);
       return;
@@ -279,13 +279,15 @@ export const break_words = (sentence: string, separator: string = ZWSP): string 
   return broken;
 }
 
-function with_dl_docs(results: any, fields: string[], callback: (result: any, doc: any) => void, ) {
+// call callback with the definition list for each result
+function foreach_dl(results: any, fields: string[], callback: (result: any, doc: any) => void, ) {
   for (const result of results) {
-    with_dl_doc(result, fields, callback)
+    extract_dl(result, fields, callback)
   }
 }
 
-function with_dl_doc(result: any, fields: string[], callback: (result: any, doc: any) => void) {
+// extract the html definition list from the result field or create an empty one
+function extract_dl(result: any, fields: string[], callback: (result: any, doc: any) => void) {
   fields.forEach(field => {
     const value = result[field];
     if (value === undefined) {
@@ -300,8 +302,8 @@ function with_dl_doc(result: any, fields: string[], callback: (result: any, doc:
   })
 }
 
-export const onyomi = async (query: string, options: any) => {
-  const results = await anki_query(query, "kana", "kanji", "meaning");
+export const on_yomi = async (query: string, options: any) => {
+  const results = await anki_named_query("On'yomi", query, "kana", "kanji", "meaning");
 
   for (const result of results) {
     const katakana = onyomi_note(result);
@@ -317,7 +319,7 @@ const KANA_NOTES = /^([^.]*)(\..*)?$/;
 export const nacs_adjectives = async (query: string, options: any) => {
   let words = query.split(",").map((s) => s.trim());
   for (const word of words) {
-    const results = await anki_query(`kanji:${word}*`, "kana", "kanji", "meaning", "furigana");
+    const results = await anki_named_query("な", `kanji:${word}*`, "kana", "kanji", "meaning", "furigana");
     if (results.length === 0) {
       console.log("Don't have", word);
     }
@@ -334,7 +336,7 @@ export const nacs_adjectives = async (query: string, options: any) => {
 }
 
 export const na_adjectives = async (query: string, options: any) => {
-  const results = await anki_query(query, "kana", "kanji", "meaning", "furigana");
+  const results = await anki_named_query("な", query, "kana", "kanji", "meaning", "furigana");
 
   for (const result of results) {
     await na_note(result, options);
@@ -395,7 +397,7 @@ export const onyomi_note = (result: any): string | null => {
 }
 
 export const regex_substitution = async (query: string, field: string, search: string, replace: string, options: any) => {
-  const results = await anki_query(query, field);
+  const results = await anki_named_query("Regex", query, field);
   const regex = new RegExp(search, "i");
 
   for (const result of results) {
@@ -414,7 +416,7 @@ export const regex_substitution = async (query: string, field: string, search: s
 export const translate = async (query: string, options: any) => {
   const results = await anki_named_query("Translate", query, "target", "details", "sentence");
   
-  with_dl_docs(results, ["target", "sentence"], async (result, doc) => {
+  foreach_dl(results, ["target", "sentence"], async (result, doc) => {
     if (doc.dd.length > 1) {
       if (!options.force) {
         console.log("Skipping", result.id, "with translation:", doc.dd)
@@ -431,7 +433,7 @@ export const translate = async (query: string, options: any) => {
         console.log("Translate", target);
         const only_kanja = new RegExp(`[^${KANJI_KANA}]`, "gi");
         const example = target.replaceAll(only_kanja, "")
-        const definition = await wrapTranslation(doc.dt, example);
+        const definition = await definition_list(doc.dt, example);
         Object.assign(fields, {sentence: definition});
       }
     } else {
@@ -442,7 +444,7 @@ export const translate = async (query: string, options: any) => {
         Object.assign(fields, {details: ""});
       } else {
         console.error("Cannot use details", result.id, result.details);
-        definition = await wrapTranslation(doc.dt, result.target);
+        definition = await definition_list(doc.dt, result.target);
       }
       Object.assign(fields, {target: definition});
     }
@@ -451,7 +453,8 @@ export const translate = async (query: string, options: any) => {
   });
 }
 
-async function wrapTranslation(definition: string, example: string): Promise<string> {
+// use ai to translate the example to a definition list
+async function definition_list(definition: string, example: string): Promise<string> {
   const translation = await complete(
     `Vertaal in het Nederlands in één beknopte zin: ${example}`,
   ) ?? "";

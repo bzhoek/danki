@@ -8,7 +8,7 @@ import {
   generate_speech,
   generate_target,
   hint, inbox_notes, move_cards, na_adjectives,
-  onyomi, regex_substitution,
+  on_yomi, regex_substitution,
   simple_sentence,
   translate, word_break
 } from "./src/actions.ts";
@@ -49,7 +49,7 @@ query_apply("inbox", "Move cards of matching notes to Inbox", inbox_notes, only_
 query_apply("generate", "Generate target sentence as definition list", generate_target);
 query_apply("notes", "Generate notes based on used kanji", generate_notes);
 query_apply("hint", "Create hint from target", hint);
-query_apply("onyomi", "Convert hiragana to katakana", onyomi);
+query_apply("on_yomi", "Convert hiragana to katakana", on_yomi);
 query_apply("speech", "Add speech from target in context", generate_speech);
 query_apply("translate", "Add translation to target as definition", translate);
 query_apply("break", "Add zero-width spaces to target", word_break);
