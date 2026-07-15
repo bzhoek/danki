@@ -243,8 +243,9 @@ export const clean_nbsp = async () => {
   for (const result of results) {
     const changes = {}
     for (const [key, value] of Object.entries(result.fields)) {
-      if (value.value.includes("&nbsp")) {
-        Object.assign(changes, {[key]: value.value.replaceAll("&nbsp;", " ")});
+      const field = value as { value: string };
+      if (field.value.includes("&nbsp")) {
+        Object.assign(changes, {[key]: field.value.replaceAll("&nbsp;", " ")});
       }
     }
     if (Object.keys(changes).length > 0) {
