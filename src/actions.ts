@@ -83,14 +83,14 @@ export const flag_ease = async (query: string, options: any) => {
   for (const card of cards.result) {
     const review = reviews.result[card];
     const last = review[review.length - 1];
+    
     if (last.type === 0) {
-      console.log(NOP, "Learning", card, "skipping...");
+      console.log(NOP, "Learning", card);
       continue;
     }
     
-    // console.log(typeof last.ease, typeof ease);
     if (last.ease !== ease) {
-      console.log(NOP, "At ease", last.ease, "for", card, "skipping...");
+      console.log(NOP, "Skipping", card, "at ease", last.ease);
       continue;
     }
     
