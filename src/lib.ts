@@ -126,12 +126,13 @@ export const complete = async (prompt: string) => {
 };
 
 export const is_jukugo = (word: string) => {
-  let clean = word.split(".")[0].trim()
+  const clean = word.split(".")[0].trim()
+  const is_suffix = clean[0] === "〜";
 
-  let kanji = Array.from(clean)
+  const kanji = Array.from(clean)
     .filter(ch => is_kanji(ch))
 
-  if (kanji.length === 1) { // single kanji is kun
+  if (kanji.length === 1 && !is_suffix) { // single kanji is kun, unless suffix
     return false
   }
 
