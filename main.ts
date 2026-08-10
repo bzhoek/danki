@@ -9,7 +9,7 @@ import {
   generate_target,
   hint, inbox_notes, move_cards, na_adjectives,
   on_yomi, regex_substitution,
-  simple_sentence,
+  simple_sentence, split_target,
   translate, word_break
 } from "./src/actions.ts";
 
@@ -47,6 +47,7 @@ query_apply("move", "Move cards to deck", move_cards, only_noop)
 query_apply("inbox", "Move cards of matching notes to Inbox", inbox_notes, only_noop);
 
 query_apply("generate", "Generate target sentence as definition list", generate_target);
+query_apply("tsplit", "Split existing target to definition list", split_target);
 query_apply("notes", "Generate notes based on used kanji", generate_notes);
 query_apply("hint", "Create hint from target", hint);
 query_apply("onyomi", "Convert hiragana to katakana", on_yomi);

@@ -10,14 +10,14 @@ import {
   is_jukugo, KANJI_KANA,
   to_katakana,
   update_fields,
-  OK, NOP, ERR
+  OK, NOP, ERR, KANJI
 } from "./lib.ts";
 import {dl, extractXPaths} from "./dom.ts";
 
 const breaks = loadDefaultJapaneseParser();
 
 export const simple_sentence = (word: string) =>
-  `Geef een natuurlijke Japanse voorbeeldzin met het woord: "${word}, zonder het woord te herhalen. Het liefst tussen 10 en 20 tekens en met een werkwoord en een partikel. Gebruik geen persoonlijk voornaamwoord. Gebruik één regel voor de Japanse zin en één regel voor de Nederlandse vertaling.`;
+  `Geef een kloppende Japanse voorbeeldzin op JLPT N4 niveau met het woord: "${word}, zonder het woord te herhalen. Het liefst tussen 10 en 20 tekens en met een werkwoord en een partikel. Gebruik geen persoonlijk voornaamwoord. Gebruik één regel voor de Japanse zin en één regel voor de Nederlandse vertaling.`;
 
 export type ApplyOptions = {
   force: boolean;
@@ -128,6 +128,31 @@ export const generate_target = async (query: string, options: ApplyOptions) => {
     const lines = completion.replace("。", "").split("\n");
     const fields = {
       target: `<dl><dt>${lines[0].trim()}</dt><dd>${lines[1]}</dd></dl>`,
+    };
+    await update_fields(result.id, fields, options.noop);
+  });
+};
+
+const not_kanji = new RegExp(`[^${KANJI}]`, "gi");
+const only_kanji = new RegExp(`[${KANJI}]`, "gi");
+
+export const split_target = async (query: string, options: ApplyOptions) => {
+  const results = await anki_named_query("Target", query, "target");
+  
+  foreach_dl(results, ["target"], async (result, doc) => {
+    if (doc && doc.dd.length > 1) {
+      if (!options.force) {
+        console.log(NOP, "Skipping existing target:", result.target);
+        return;
+      }
+      console.log(OK, "Forcing new target:", result.target);
+    }
+    
+    const dt = doc.dt.replaceAll(not_kanji, "")
+    const dd = doc.dt.replaceAll(only_kanji, "")
+
+    const fields = {
+      target: `<dl><dt>${dt.trim()}</dt><dd>${dd.trim()}</dd></dl>`,
     };
     await update_fields(result.id, fields, options.noop);
   });
