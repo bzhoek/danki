@@ -5,6 +5,7 @@
     "openai": "npm:openai@6.33",
     "xmldom": "npm:@xmldom/xmldom@0.9.9",
     "xpath": "npm:xpath@0.0.34",
+    "showdown": "npm:showdown@2.1.0",
     "budoux": "npm:budoux@0.8.1"
   }
 }

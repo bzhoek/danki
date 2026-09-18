@@ -1,4 +1,4 @@
-#!/usr/bin/env deno -W=. -E=OPENAI_API_KEY,OPENAI_BASE_URL,OPENAI_ORG_ID,OPENAI_PROJECT_ID,OPENAI_WEBHOOK_SECRET,OPENAI_LOG,DEBUG,CLICOLOR_FORCE -N=api.openai.com:443,127.0.0.1:8765
+#!/usr/bin/env deno -R -W -E=OPENAI_API_KEY,OPENAI_BASE_URL,OPENAI_ORG_ID,OPENAI_PROJECT_ID,OPENAI_WEBHOOK_SECRET,OPENAI_LOG,DEBUG,CLICOLOR_FORCE -N=api.openai.com:443,127.0.0.1:8765
 // deno-lint-ignore-file no-explicit-any
 
 import {Command} from "commander";
@@ -12,6 +12,7 @@ import {
   simple_sentence, split_target,
   translate, word_break
 } from "./src/actions.ts";
+import {processMdFiles} from "./src/markdown.ts";
 
 const cli = new Command();
 cli
@@ -123,6 +124,12 @@ cli.command("insert")
   .argument("<words>", "Words as comma-separated list")
   .action(async (words) => {
     await insert_onyomis(words);
+  });
+
+cli.command("markdown")
+  .description("Convert media Markdown to HTML")
+  .action(async () => {
+    await processMdFiles()
   });
 
 cli.parse();
