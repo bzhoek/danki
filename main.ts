@@ -8,7 +8,7 @@ import {
   generate_speech,
   generate_target,
   hint, inbox_notes, move_cards, na_adjectives,
-  on_yomi, regex_substitution,
+  on_yomi, regex_substitution, n3_sentence,
   simple_sentence, split_target,
   translate, word_break
 } from "./src/actions.ts";
@@ -95,6 +95,8 @@ prompt_word("memo", "An everyday short sentence", (word) =>
 )
 
 prompt_word("simple", "A simple sentence", simple_sentence);
+
+prompt_word("n3", "Een voorbeeldzin op N3 niveau", n3_sentence);
 
 const prompt_sentence = (command: string, description: string, transform: (...args: any[]) => string) =>
   prompt_apply(command, description, transform)
