@@ -17,10 +17,10 @@ import {dl, extractXPaths} from "./dom.ts";
 const breaks = loadDefaultJapaneseParser();
 
 export const n3_sentence = (word: string) =>
-  `Een korte voorbeeldzin op N3 niveau met ${word}. Gebruik één regel voor de Japanse zin en één regel voor de Nederlandse vertaling.`;
+  `Een korte voorbeeldzin op JLPT N3 niveau met ${word}. Gebruik één regel voor de Japanse zin en één regel voor de Nederlandse vertaling.`;
 
 export const simple_sentence = (word: string) =>
-  `Geef een kloppende Japanse voorbeeldzin op JLPT N4 niveau met het woord: "${word}, zonder het woord te herhalen. Het liefst tussen 10 en 20 tekens en met een werkwoord en een partikel. Gebruik geen persoonlijk voornaamwoord. Gebruik één regel voor de Japanse zin en één regel voor de Nederlandse vertaling.`;
+  `Geef een korte voorbeeldzin op JLPT N3 niveau met het woord: "${word}, zonder het woord te herhalen. Het liefst tussen 10 en 20 tekens en met een werkwoord en een partikel. Gebruik geen persoonlijk voornaamwoord. Gebruik één regel voor de Japanse zin en één regel voor de Nederlandse vertaling.`;
 
 export type ApplyOptions = {
   force: boolean;
