@@ -17,7 +17,7 @@ import {dl, extractXPaths} from "./dom.ts";
 const breaks = loadDefaultJapaneseParser();
 
 export const n3_sentence = (word: string) =>
-  `Een korte voorbeeldzin op JLPT N3 niveau met ${word}. Gebruik één regel voor de Japanse zin en één regel voor de Nederlandse vertaling.`;
+  `Een korte voorbeeldzin, zonder tijdsaanduiding of persoonlijk naamwoord, op JLPT N3 niveau met ${word}, maar niet in een samenstelling en zonder de kanji te herhalen. Gebruik één regel voor de Japanse zin en één regel voor de Nederlandse vertaling.`;
 
 export const simple_sentence = (word: string) =>
   `Geef een korte voorbeeldzin op JLPT N3 niveau met het woord: "${word}, zonder het woord te herhalen. Het liefst tussen 10 en 20 tekens en met een werkwoord en een partikel. Gebruik geen persoonlijk voornaamwoord. Gebruik één regel voor de Japanse zin en één regel voor de Nederlandse vertaling.`;
@@ -517,3 +517,15 @@ async function definition_list(definition: string, example: string): Promise<str
   ) ?? "";
   return `<dl><dt>${definition}</dt><dd>${translation}</dd></dl>`;
 }
+
+export const n3_definition = async (query: string, options: any) => {
+  const completion = await complete(n3_sentence(query));
+  if (options.definition) {
+    const lines = completion.replace(/。/g, "").split("\n");
+    let definition = `<dl><dt>${lines[0].trim()}</dt>\n  <dd>${lines[1]}</dd></dl>`
+    console.log(definition);
+  } else {
+    console.log(completion);
+  }
+}
+

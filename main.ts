@@ -7,9 +7,8 @@ import {
   ApplyOptions, clean_nbsp, flag_cards, flag_ease, generate_notes,
   generate_speech,
   generate_target,
-  hint, inbox_notes, move_cards, na_adjectives,
-  on_yomi, regex_substitution, n3_sentence,
-  simple_sentence, split_target,
+  hint, inbox_notes, move_cards, na_adjectives, n3_definition,
+  on_yomi, regex_substitution, simple_sentence, split_target,
   translate, word_break
 } from "./src/actions.ts";
 import {processMdFiles} from "./src/markdown.ts";
@@ -24,6 +23,10 @@ function sub_command(command: string, description: string) {
 }
 
 sub_command("clean", "Replace nbsp").action(clean_nbsp);
+sub_command("n3", "Generate a N3 level example sentence")
+  .option("-d, --definition", "Display as definition list")
+  .argument("<word>", "Word to use")
+  .action(n3_definition)
 
 const only_noop: ApplyOptions = {force: false, noop: true};
 const force_noop: ApplyOptions = {force: true, noop: true};
@@ -95,8 +98,6 @@ prompt_word("memo", "An everyday short sentence", (word) =>
 )
 
 prompt_word("simple", "A simple sentence", simple_sentence);
-
-prompt_word("n3", "Een voorbeeldzin op N3 niveau", n3_sentence);
 
 const prompt_sentence = (command: string, description: string, transform: (...args: any[]) => string) =>
   prompt_apply(command, description, transform)
