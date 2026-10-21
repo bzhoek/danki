@@ -17,10 +17,10 @@ import {dl, extractXPaths} from "./dom.ts";
 const breaks = loadDefaultJapaneseParser();
 
 export const n3_sentence = (word: string) =>
-  `Een korte voorbeeldzin, zonder tijdsaanduiding of persoonlijk naamwoord, op JLPT N3 niveau met ${word}, maar niet in een samenstelling en zonder de kanji te herhalen. Gebruik één regel voor de Japanse zin en één regel voor de Nederlandse vertaling.`;
+  `Een korte voorbeeldzin met meerdere zelfstandig naamwoorden, zonder tijdsaanduiding of persoonlijk naamwoord, op JLPT N3 niveau met ${word}, maar niet in een samenstelling en zonder de kanji te herhalen. Gebruik één regel voor de Japanse zin en één regel voor de Nederlandse vertaling.`;
 
 export const simple_sentence = (word: string) =>
-  `Geef een korte voorbeeldzin op JLPT N3 niveau met het woord: "${word}, zonder het woord te herhalen. Het liefst tussen 10 en 20 tekens en met een werkwoord en een partikel. Gebruik geen persoonlijk voornaamwoord. Gebruik één regel voor de Japanse zin en één regel voor de Nederlandse vertaling.`;
+  `Geef een korte voorbeeldzin, zonder tijdsaanduiding of persoonlijk naamwoord, op JLPT N3 niveau met het woord: "${word}, zonder het woord te herhalen. Het liefst tussen 10 en 20 tekens en met een werkwoord en een partikel. Gebruik geen persoonlijk voornaamwoord. Gebruik één regel voor de Japanse zin en één regel voor de Nederlandse vertaling.`;
 
 export type ApplyOptions = {
   force: boolean;
@@ -122,7 +122,7 @@ export const generate_target = async (query: string, options: ApplyOptions) => {
     }
 
     const word = either(result.kanji, result.kana);
-    const completion = await complete(simple_sentence(word));
+    const completion = await complete(n3_sentence(word));
     if (completion === null) {
       console.error(ERR, "No completion for", word);
       return;
