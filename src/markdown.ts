@@ -29,7 +29,7 @@ export async function processMdFiles(directory: string) {
         converter.setOption("tables", "true");
         let html = converter.makeHtml(text);
         await Deno.writeTextFile(html_path, 
-          `<html><head><link rel="stylesheet" href="markdown.css"></head><body>${html}</body>`);
+          `<html><head><link rel="stylesheet" href="_markdown.css"><script src="_markdown.js"></script></head><body class="details">${html}</body></html>`);
         console.log("Updated", html_path);
       }
     }
