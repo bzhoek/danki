@@ -2,14 +2,14 @@ import { expandGlob } from "jsr:@std/fs";
 import * as path from "node:path";
 import showdown from "showdown";
 
-const media =
+const MEDIA =
   "/Users/bas/Library/Application Support/Anki2/User 1/collection.media";
 
 export async function processMdFiles(directory: string) {
-  for await (const entry of expandGlob(`${media}/**/*.md`)) {
+  for await (const entry of expandGlob(`${directory}/**/*.md`)) {
     if (entry.isFile) {
-      const { dir, name } = path.parse(entry.path);
-      const html_path = path.format({ dir, name, ext: ".html" });
+      const { name } = path.parse(entry.path);
+      const html_path = path.format({ dir: MEDIA, name: `_${name}`, ext: ".html" });
 
       const original = await Deno.stat(entry.path);
       const derived = await Deno.stat(html_path).catch(() => ({
@@ -28,8 +28,9 @@ export async function processMdFiles(directory: string) {
         let converter = new showdown.Converter();
         converter.setOption("tables", "true");
         let html = converter.makeHtml(text);
+        let ts = Date.now();
         await Deno.writeTextFile(html_path, 
-          `<html><head><link rel="stylesheet" href="_markdown.css"><script src="_markdown.js"></script></head><body class="details">${html}</body></html>`);
+          `<html><head><link rel="stylesheet" href="_markdown.css?${ts}"><script src="_markdown.js?${ts}"></script></head><body class="details">${html}</body></html>`);
         console.log("Updated", html_path);
       }
     }

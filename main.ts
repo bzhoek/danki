@@ -130,9 +130,10 @@ cli.command("insert")
   });
 
 cli.command("markdown")
-  .description("Convert media Markdown to HTML")
-  .action(async () => {
-    await processMdFiles()
+  .description("Convert Markdown in directory to HTML in media folder")
+  .argument("<directory>", "Directory with Markdown files")
+  .action(async (directory) => {
+    await processMdFiles(directory)
   });
 
 cli.parse();
