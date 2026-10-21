@@ -490,7 +490,7 @@ export const translate = async (query: string, options: any) => {
         console.log(OK, "Translate", target);
         const only_kanja = new RegExp(`[^${KANJI_KANA}]`, "gi");
         const example = target.replaceAll(only_kanja, "")
-        const definition = await definition_list(doc.dt, example);
+        const definition = await translate_definition_term(doc.dt, example);
         Object.assign(fields, {sentence: definition});
       }
     } else {
@@ -501,7 +501,7 @@ export const translate = async (query: string, options: any) => {
         Object.assign(fields, {details: ""});
       } else {
         console.info(NOP, "Cannot use details", result.id, result.details);
-        definition = await definition_list(doc.dt, result.target);
+        definition = await translate_definition_term(doc.dt, result.target);
       }
       Object.assign(fields, {target: definition});
     }
@@ -511,7 +511,7 @@ export const translate = async (query: string, options: any) => {
 }
 
 // use ai to translate the example to a definition list
-async function definition_list(definition: string, example: string): Promise<string> {
+async function translate_definition_term(definition: string, example: string): Promise<string> {
   const translation = await complete(
     `Vertaal in het Nederlands in één beknopte zin: ${example}`,
   ) ?? "";
